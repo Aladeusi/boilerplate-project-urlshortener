@@ -61,10 +61,12 @@ app.post("/api/shorturl/new", async(req, res)=>{
   url =(url)?url:req.body.url;
   console.log(url);
   //validate url
+  
   const hostname= new URL(url).hostname;
   //console.log(hostname)
   dns.lookup(hostname, async(err, addresses, family)=>{
-    if(!err){
+    if(url.includes(`http://`)|| url.includes(`https://`)){
+      if(!err){
     //hash the url
     console.log(addresses)
     const hash = sha1(url);
@@ -77,7 +79,14 @@ app.post("/api/shorturl/new", async(req, res)=>{
       console.log(addresses)
     res.status(400).json({error:"invalid url"})
    }
+    }else{
+      res.status(400).json({error:"invalid url"})
+    }
+    
   });
+
+
+
   }catch(e){
     res.status(500).json({error:"Some error ocurred. Please try again later."})
   }
