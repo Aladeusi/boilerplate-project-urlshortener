@@ -13,7 +13,7 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: "false" }));
 app.use(bodyParser.json());
 //configure req timeout
-const TIMEOUT = 10000;
+const TIMEOUT = 1000000;
 //media scanning on poublic folder
 app.use('/public', express.static(`${process.cwd()}/public`));
 //connect to database - mongodb
@@ -61,11 +61,12 @@ app.post("/api/shorturl/new", async(req, res)=>{
   url =(url)?url:req.body.url;
   console.log(url);
   //validate url
-  
+        if (url.includes('http://')|| url.includes('https://'))
+        {
   const hostname= new URL(url).hostname;
   //console.log(hostname)
   dns.lookup(hostname, async(err, addresses, family)=>{
-    if(url.includes(`http://`)|| url.includes(`https://`)){
+    
       if(!err){
     //hash the url
     console.log(addresses)
@@ -74,21 +75,20 @@ app.post("/api/shorturl/new", async(req, res)=>{
     const shorturl= `${process.env.BASE_URL}/api/shorturl/${hash}`;
     //save record
     const record=await createNewRecord(url, shorturl, hash);
-    res.status(200).json({original_url:url, short_url:hash});
+    res.json({original_url:url, short_url:hash});
     }else{
       console.log(addresses)
-    res.status(400).json({error:"invalid url"})
+    res.json({ error: 'Invalid URL' })
    }
-    }else{
-      res.status(400).json({error:"invalid url"})
-    }
-    
   });
 
-
+  }else{
+    console.log(".....")
+      res.json({ error: 'Invalid URL' })
+    }
 
   }catch(e){
-    res.status(500).json({error:"Some error ocurred. Please try again later."})
+    res.json({error:"Some error ocurred. Please try again later."})
   }
 })
 
@@ -97,18 +97,18 @@ app.post("/api/shorturl/new", async(req, res)=>{
 app.get("/api/shorturl/:hash", async(req, res)=>{
   try{
   let hash = req.params.hash;
-  console.log(hash);
+  //console.log(hash);
   //find record in the database
   const record= await findOneRecordByHash(hash);
-  console.log(record);
+  //console.log(record);
   if(record){
-    console.log(record);
+   // console.log(record);
     res.redirect(record.originalUrl);
   }else{
-    res.status(400).json({error:"url does not exist in our database"})
+    res.json({error:"url does not exist in our database"})
   }
   }catch(e){
-    res.status(500).json({error:"Some error ocurred. Please try again later."})
+    res.json({error:"Some error ocurred. Please try again later."})
   }
 })
 
